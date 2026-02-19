@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏏 Cricket Availability</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;600;800&display=swap');
+
+:root {
+  --g1: #0a3d1f;
+  --g2: #1a6b38;
+  --g3: #25a554;
+  --cream: #f5f0e8;
+  --yellow: #f9c74f;
+  --red: #c0392b;
+  --orange: #e67e22;
+  --border: #d4c9b0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: linear-gradient(160deg, #0a3d1f 0%, #1a6b38 55%, #0a3d1f 100%);
+  min-height: 100vh; color: #1a1a1a;
+}
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none;
+  background: repeating-linear-gradient(90deg,transparent,transparent 80px,rgba(255,255,255,0.015) 80px,rgba(255,255,255,0.015) 81px);
+}
+.wrap { position:relative; z-index:1; max-width:900px; margin:0 auto; padding:0 14px 80px; }
+
+/* LOADER */
+#loader {
+  position:fixed; inset:0; background:#0a3d1f; z-index:200;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  transition:opacity 0.5s;
+}
+.l-ball { font-size:56px; margin-bottom:18px; animation:spin 1.5s linear infinite; }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.l-title { font-family:'Bebas Neue',sans-serif; font-size:30px; color:var(--cream); letter-spacing:3px; }
+.l-sub   { color:rgba(245,240,232,0.45); font-size:13px; margin-top:8px; }
+
+/* HEADER */
+header { text-align:center; padding:30px 0 20px; }
+.logo { font-family:'Bebas Neue',sans-serif; font-size:clamp(34px,8vw,62px); color:var(--cream); letter-spacing:3px; text-shadow:0 4px 20px rgba(0,0,0,0.4); }
+.logo em { color:var(--yellow); font-style:normal; }
+.tagline { color:rgba(245,240,232,0.55); font-size:12px; letter-spacing:2px; text-transform:uppercase; margin-top:5px; }
+#syncBadge { display:inline-block; margin-top:8px; font-size:11px; padding:3px 12px; border-radius:20px; background:rgba(255,255,255,0.08); color:rgba(245,240,232,0.45); }
+#syncBadge.live { background:rgba(74,222,128,0.15); color:#4ade80; }
+
+/* PANELS */
+.panel { background:var(--cream); border-radius:16px; padding:18px 22px; margin-bottom:16px; box-shadow:0 8px 32px rgba(0,0,0,0.3); }
+.panel-title { font-size:11px; text-transform:uppercase; letter-spacing:2px; color:var(--g1); font-weight:800; margin-bottom:12px; }
+
+/* NAME SELECTOR */
+.name-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+select.nsel {
+  flex:1; min-width:180px; padding:11px 16px; border:2px solid var(--border); border-radius:10px;
+  font-family:'DM Sans',sans-serif; font-size:16px; background:#fff; outline:none; cursor:pointer;
+  transition:border-color .2s;
+}
+select.nsel:focus { border-color:var(--g2); }
+.nbadge { background:var(--g1); color:#fff; padding:10px 20px; border-radius:30px; font-weight:700; font-size:15px; display:none; align-items:center; gap:8px; }
+.nbadge .dot { width:8px; height:8px; background:#4ade80; border-radius:50%; flex-shrink:0; }
+
+/* MONTH NAV */
+.mnav { display:flex; align-items:center; justify-content:center; gap:14px; margin:18px 0; }
+.nbtn {
+  background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:var(--cream);
+  width:42px; height:42px; border-radius:50%; font-size:22px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:background .2s;
+}
+.nbtn:hover { background:rgba(255,255,255,0.22); }
+.mlabel { font-family:'Bebas Neue',sans-serif; font-size:24px; color:var(--cream); letter-spacing:2px; min-width:230px; text-align:center; }
+
+/* WEEKEND CARD */
+.wcard { background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.22); margin-bottom:12px; }
+.whead { background:var(--g1); color:var(--cream); padding:11px 18px; display:flex; align-items:center; justify-content:space-between; }
+.wnum  { font-size:10px; letter-spacing:2.5px; opacity:.5; font-weight:700; }
+.wdates{ font-family:'Bebas Neue',sans-serif; font-size:21px; letter-spacing:1px; }
+.wcnt  { background:rgba(249,199,79,.18); color:var(--yellow); padding:3px 11px; border-radius:20px; font-size:13px; font-weight:700; }
+.drow  { display:grid; grid-template-columns:1fr 1fr; }
+@media(max-width:460px){ .drow{grid-template-columns:1fr;} }
+.dcol  { padding:15px 16px; border-right:1px solid #f0ebe0; }
+.dcol:last-child { border-right:none; }
+.dlabel{ font-size:10px; text-transform:uppercase; letter-spacing:2px; color:#aaa; font-weight:700; margin-bottom:5px; }
+.ddate { font-size:14px; font-weight:700; color:var(--g1); margin-bottom:11px; }
+
+/* AVAIL BUTTONS */
+.arow  { display:flex; gap:5px; margin-bottom:10px; }
+.abtn  { flex:1; padding:8px 2px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s; border:2px solid transparent; text-align:center; }
+.abtn:disabled{ opacity:.35; cursor:not-allowed; }
+.ay    { background:#e8f5ee; border-color:#a8dbbe; color:var(--g2); }
+.ay.on { background:var(--g2); border-color:var(--g2); color:#fff; }
+.an    { background:#fdecea; border-color:#f5b7b1; color:var(--red); }
+.an.on { background:var(--red); border-color:var(--red); color:#fff; }
+.am    { background:#fef9e7; border-color:#f9e4b7; color:var(--orange); }
+.am.on { background:var(--orange); border-color:var(--orange); color:#fff; }
+
+/* TAGS */
+.tags { display:flex; flex-wrap:wrap; gap:4px; min-height:22px; }
+.tag  { font-size:11px; padding:2px 8px; border-radius:12px; font-weight:600; }
+.ty   { background:#e8f5ee; color:var(--g2); }
+.tn   { background:#fdecea; color:var(--red); }
+.tm   { background:#fef9e7; color:var(--orange); }
+.tnr  { font-size:11px; color:#ccc; }
+
+/* SUMMARY */
+.sbox { background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14); border-radius:16px; padding:20px; margin-top:10px; }
+.stitle{ font-family:'Bebas Neue',sans-serif; color:var(--cream); font-size:24px; letter-spacing:2px; margin-bottom:14px; }
+.tscroll{ overflow-x:auto; }
+table  { width:100%; border-collapse:collapse; background:#fff; border-radius:10px; overflow:hidden; font-size:12px; }
+th     { background:var(--g1); color:var(--cream); padding:9px 10px; text-align:left; font-size:10px; letter-spacing:1px; text-transform:uppercase; white-space:nowrap; }
+td     { padding:8px 10px; border-bottom:1px solid #f0ebe0; white-space:nowrap; }
+tr:last-child td{ border-bottom:none; }
+tr:nth-child(even) td{ background:#fafaf7; }
+.pill  { display:inline-block; padding:2px 7px; border-radius:10px; font-size:11px; font-weight:700; }
+.py    { background:#e8f5ee; color:var(--g2); }
+.pn    { background:#fdecea; color:var(--red); }
+.pm    { background:#fef9e7; color:var(--orange); }
+.p0    { color:#ccc; }
+
+/* ADMIN */
+.atogwrap{ text-align:center; margin-bottom:14px; }
+.atog  { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.2); color:rgba(245,240,232,.7); padding:7px 18px; border-radius:30px; font-size:12px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .2s; }
+.atog:hover{ background:rgba(255,255,255,.18); color:var(--cream); }
+.abox  { background:var(--cream); border-radius:16px; padding:20px 22px; margin-bottom:16px; box-shadow:0 8px 32px rgba(0,0,0,0.3); }
+.abox h3{ font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; color:var(--g1); margin-bottom:6px; }
+.abox p { font-size:12px; color:#888; margin-bottom:10px; }
+.abox textarea{ width:100%; border:2px solid var(--border); border-radius:10px; padding:10px 14px; font-family:'DM Sans',sans-serif; font-size:14px; outline:none; resize:vertical; min-height:220px; transition:border-color .2s; }
+.abox textarea:focus{ border-color:var(--g2); }
+.sbtn  { margin-top:10px; background:var(--g1); color:#fff; border:none; padding:10px 26px; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background .2s; }
+.sbtn:hover{ background:var(--g2); }
+.sbtn:disabled{ opacity:.5; cursor:not-allowed; }
+
+/* SHARE */
+.share { margin-top:24px; text-align:center; padding:16px 20px; background:rgba(249,199,79,.1); border:1px solid rgba(249,199,79,.25); border-radius:14px; color:var(--cream); font-size:13px; line-height:1.7; }
+.share strong{ color:var(--yellow); }
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="l-ball">🏏</div>
+  <div class="l-title">Cricket Availability</div>
+  <div class="l-sub">Connecting to database…</div>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="logo">🏏 <em>Cricket</em> Availability</div>
+    <div class="tagline">Mark your weekends &bull; Help the team plan</div>
+    <span id="syncBadge">Connecting…</span>
+  </header>
+
+  <div class="atogwrap">
+    <button class="atog" onclick="toggleAdmin()">⚙️ Manage Players (Admin)</button>
+  </div>
+
+  <div class="abox" id="adminBox" style="display:none">
+    <h3>Player Roster</h3>
+    <p>One name per line. All changes save instantly and reflect for everyone.</p>
+    <textarea id="playerTA"></textarea><br>
+    <button class="sbtn" id="saveBtn" onclick="savePlayers()">💾 Save Roster</button>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">👤 Select Your Name</div>
+    <div class="name-row">
+      <select class="nsel" id="nameSelect" onchange="onNameChange()">
+        <option value="">-- Who are you? --</option>
+      </select>
+      <div class="nbadge" id="nbadge"><div class="dot"></div><span id="nbadgeText"></span></div>
+    </div>
+  </div>
+
+  <div class="mnav">
+    <button class="nbtn" onclick="prevP()">&#8249;</button>
+    <div class="mlabel" id="mlabel"></div>
+    <button class="nbtn" onclick="nextP()">&#8250;</button>
+  </div>
+
+  <div id="grid"></div>
+
+  <div class="sbox">
+    <div class="stitle">📋 Full Team Summary</div>
+    <div class="tscroll" id="summary"></div>
+  </div>
+
+  <div class="share">
+    <strong>📲 Share this page with your team!</strong><br>
+    All responses save instantly to the cloud. Everyone sees updates in real time.
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp }                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, get }       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const app = initializeApp({ databaseURL: "https://cricket-team-6a399-default-rtdb.firebaseio.com" });
+const db  = getDatabase(app);
+
+const DEFAULT_PLAYERS = [
+  "Sameer","Yash","Aditya","Ashish Somani","Dr Rahul Nagar",
+  "Gaurav Harsana","Jai Shri Mahakaal","Kush Chaudhary","Manish Gurjar",
+  "Navneet","Gaurav Singh","Hritik","Mukul Nahata","Shashank Verma","Ajay Singh Chauhan"
+];
+
+const MF = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const MS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+let players   = [...DEFAULT_PLAYERS];
+let avail     = {};
+let who       = "";
+let base      = new Date(2026, 2, 1); // March 2026
+
+const sk  = n => n.replace(/[.#$[\]/]/g,'_');
+const dk  = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const fmt = d => `${d.getDate()} ${MS[d.getMonth()]}`;
+
+function weekends(y,m){ const a=[],d=new Date(y,m,1); while(d.getMonth()===m){if(d.getDay()===6){const s=new Date(d),u=new Date(y,m,d.getDate()+1);a.push({sat:s,sun:u});d.setDate(d.getDate()+7);}else d.setDate(d.getDate()+1);}return a; }
+function periodWk(b){ let a=[]; for(let i=0;i<2;i++){const m=(b.getMonth()+i)%12,y=b.getFullYear()+Math.floor((b.getMonth()+i)/12);a=a.concat(weekends(y,m));}return a; }
+
+// ── Firebase live listeners ──────────────────────────────────────────────────
+onValue(ref(db,'players'), snap => {
+  const v = snap.val();
+  if(v && Array.isArray(v)){ players=v; document.getElementById('playerTA').value=players.join('\n'); }
+  rebuildSelect(); render();
+});
+
+onValue(ref(db,'availability'), snap => {
+  const raw = snap.val()||{};
+  avail={};
+  players.forEach(p=>{ const k=sk(p); if(raw[k]) avail[p]=raw[k]; });
+  render();
+  const b=document.getElementById('syncBadge');
+  b.textContent='🟢 Live'; b.className='live';
+  const l=document.getElementById('loader');
+  l.style.opacity='0'; setTimeout(()=>l.style.display='none',500);
+});
+
+// Init players if DB empty
+get(ref(db,'players')).then(s=>{ if(!s.exists()) set(ref(db,'players'),DEFAULT_PLAYERS); document.getElementById('playerTA').value=players.join('\n'); rebuildSelect(); render(); }).catch(()=>{ document.getElementById('loader').style.display='none'; });
+
+// ── UI helpers ───────────────────────────────────────────────────────────────
+function rebuildSelect(){
+  const sel=document.getElementById('nameSelect'), cur=sel.value;
+  sel.innerHTML='<option value="">-- Who are you? --</option>';
+  players.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;if(p===cur)o.selected=true;sel.appendChild(o);});
+}
+
+window.onNameChange=function(){
+  who=document.getElementById('nameSelect').value;
+  const b=document.getElementById('nbadge');
+  b.style.display=who?'flex':'none';
+  document.getElementById('nbadgeText').textContent=who;
+  render();
+};
+
+window.toggleAdmin=function(){ const b=document.getElementById('adminBox'); b.style.display=b.style.display==='none'?'block':'none'; };
+
+window.savePlayers=async function(){
+  const btn=document.getElementById('saveBtn'); btn.disabled=true; btn.textContent='Saving…';
+  const list=document.getElementById('playerTA').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  await set(ref(db,'players'),list);
+  btn.disabled=false; btn.textContent='💾 Save Roster';
+};
+
+window.markAvail=async function(dateKey,status){
+  if(!who) return;
+  if(!avail[who]) avail[who]={};
+  if(avail[who][dateKey]===status) delete avail[who][dateKey]; else avail[who][dateKey]=status;
+  await set(ref(db,`availability/${sk(who)}`), avail[who]||{});
+};
+
+window.prevP=function(){ base=new Date(base.getFullYear(),base.getMonth()-2,1); render(); };
+window.nextP=function(){ base=new Date(base.getFullYear(),base.getMonth()+2,1); render(); };
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function render(){
+  const wks=periodWk(base);
+  const m1=base.getMonth(),y1=base.getFullYear(),m2=(m1+1)%12,y2=y1+(m1===11?1:0);
+  document.getElementById('mlabel').textContent=`${MF[m1]} – ${MF[m2]} ${y2}`;
+
+  // Weekend cards
+  document.getElementById('grid').innerHTML=wks.map((wk,i)=>{
+    const s=dk(wk.sat),n=dk(wk.sun);
+    const sy=players.filter(p=>avail[p]?.[s]==='yes').length;
+    const ny=players.filter(p=>avail[p]?.[n]==='yes').length;
+    const best=Math.max(sy,ny);
+    return `<div class="wcard">
+      <div class="whead"><span class="wnum">WEEKEND ${i+1}</span><span class="wdates">${fmt(wk.sat)} – ${fmt(wk.sun)}</span><span class="wcnt">${best>0?best+' ✓':'—'}</span></div>
+      <div class="drow">${dayHTML(wk.sat,'Saturday',s)}${dayHTML(wk.sun,'Sunday',n)}</div>
+    </div>`;
+  }).join('');
+
+  // Summary table
+  const dates=wks.flatMap(wk=>[{d:wk.sat,l:`${fmt(wk.sat)}<br>Sat`},{d:wk.sun,l:`${fmt(wk.sun)}<br>Sun`}]);
+  const pill=s=>s==='yes'?'<span class="pill py">✓</span>':s==='no'?'<span class="pill pn">✗</span>':s==='maybe'?'<span class="pill pm">?</span>':'<span class="p0">—</span>';
+  document.getElementById('summary').innerHTML=`<table><thead><tr><th>Player</th>${dates.map(x=>`<th style="text-align:center">${x.l}</th>`).join('')}</tr></thead><tbody>${
+    players.map((p,i)=>`<tr><td style="font-weight:700;color:var(--g1)">${p}</td>${dates.map(x=>`<td style="text-align:center">${pill(avail[p]?.[dk(x.d)])}</td>`).join('')}</tr>`).join('')
+  }</tbody></table>`;
+}
+
+function dayHTML(date,label,dateKey){
+  const my=who?(avail[who]?.[dateKey]||null):null;
+  const dis=who?'':'disabled';
+  const btns=[
+    `<button class="abtn ay${my==='yes'?' on':''}" ${dis} onclick="markAvail('${dateKey}','yes')">✓ Yes</button>`,
+    `<button class="abtn an${my==='no'?' on':''}" ${dis} onclick="markAvail('${dateKey}','no')">✗ No</button>`,
+    `<button class="abtn am${my==='maybe'?' on':''}" ${dis} onclick="markAvail('${dateKey}','maybe')">? Maybe</button>`
+  ].join('');
+  const tags=players.map(p=>{const st=avail[p]?.[dateKey];return st?`<span class="tag t${st[0]}">${p}</span>`:''}).join('');
+  return `<div class="dcol"><div class="dlabel">${label}</div><div class="ddate">${DS[date.getDay()]}, ${fmt(date)}</div><div class="arow">${btns}</div><div class="tags">${tags||'<span class="tnr">No responses yet</span>'}</div></div>`;
+}
+
+render();
+</script>
+</body>
+</html>
